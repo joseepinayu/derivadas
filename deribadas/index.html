@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cuestionario de Derivadas</title>
+</head>
+<body style="font-family: 'Segoe UI', sans-serif; background-image: url('fondo.jpg'); background-size: cover; background-position: center; margin: 0; padding: 0;">
+  <div style="max-width: 800px; background: rgba(255,255,255,0.9); margin: 40px auto; padding: 30px; border-radius: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
+    <h1 style="text-align: center; color: #01579b;">🧠 Cuestionario de Derivadas</h1>
+    <p style="text-align: center; color: #455a64;">Practica tus conocimientos y mejora tu cálculo diferencial</p>
+
+    <div id="timer" style="text-align: right; font-weight: bold; color: #d32f2f;">Tiempo: 60s</div>
+    <div id="questionText" style="font-size: 20px; margin: 20px 0;">Cargando pregunta...</div>
+    <ul id="optionsList" style="list-style: none; padding: 0;"></ul>
+    
+    <div style="margin-top: 20px;">
+      <button onclick="checkAnswer()" style="padding: 10px 20px; font-size: 16px; margin-right: 10px; border: none; border-radius: 8px; background-color: #0288d1; color: white;">Verificar</button>
+      <button onclick="nextQuestion()" style="padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background-color: #0288d1; color: white;">Siguiente</button>
+    </div>
+
+    <div id="feedback" style="margin-top: 15px; font-weight: bold;"></div>
+    <div id="finalScore" style="font-size: 18px; text-align: center; margin-top: 20px;"></div>
+    <div id="previousScore" style="font-size: 16px; text-align: center; color: #607d8b;"></div>
+  </div>
+
+  <!-- Audios -->
+  <audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+  <audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+  <audio id="bienTotal" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+  <audio id="mejorando" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
+
+  <script>
+    // Voz de bienvenida
+    window.onload = function () {
+      const bienvenida = new SpeechSynthesisUtterance("Bienvenido al cuestionario de derivadas");
+      bienvenida.lang = "es-ES";
+      speechSynthesis.speak(bienvenida);
+      loadPreviousScore();
+      loadQuestion();
+    };
+
+    const questions = [
+      { question: "¿Cuál es la derivada de f(x) = x²?", options: ["2x", "x", "x²", "1"], answer: "2x" },
+      { question: "¿Cuál es la derivada de f(x) = sen(x)?", options: ["cos(x)", "-cos(x)", "-sen(x)", "1"], answer: "cos(x)" },
+      { question: "¿Cuál es la derivada de f(x) = ln(x)?", options: ["1/x", "x", "ln(x)", "e^x"], answer: "1/x" },
+      { question: "¿Cuál es la derivada de f(x) = e^x?", options: ["e^x", "x·e^x", "ln(x)", "1/x"], answer: "e^x" },
+      { question: "¿Cuál es la derivada de f(x) = x³?", options: ["3x²", "2x", "x³", "6x"], answer: "3x²" },
+      { question: "¿Cuál es la derivada de f(x) = cos(x)?", options: ["-sen(x)", "cos(x)", "sen(x)", "-cos(x)"], answer: "-sen(x)" },
+      { question: "¿Cuál es la derivada de f(x) = tan(x)?", options: ["sec²(x)", "cos²(x)", "sen(x)", "1"], answer: "sec²(x)" }
+    ];
+
+    let currentQuestion = 0;
+    let selectedOption = "";
+    let score = 0;
+    let timer;
+    let timeLeft = 60;
+
+    function loadPreviousScore() {
+      const saved = localStorage.getItem("puntajeDerivadas");
+      if (saved) {
+        document.getElementById("previousScore").textContent = "📊 Puntaje anterior: " + saved + " puntos.";
+      }
+    }
+
+    function loadQuestion() {
+      const q = questions[currentQuestion];
+      document.getElementById("questionText").textContent = q.question;
+      const optionsList = document.getElementById("optionsList");
+      optionsList.innerHTML = "";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("finalScore").textContent = "";
+      selectedOption = "";
+
+      q.options.forEach(option => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <label style="display: block; padding: 10px; margin: 5px 0; background: #e1f5fe; border-radius: 8px;">
+            <input type="radio" name="option" value="${option}" onchange="selectedOption='${option}'"> ${option}
+          </label>`;
+        optionsList.appendChild(li);
+      });
+
+      resetTimer();
+    }
+
+    function checkAnswer() {
+      const feedback = document.getElementById("feedback");
+      if (!selectedOption) {
+        feedback.textContent = "Selecciona una opción.";
+        feedback.style.color = "orange";
+        return;
+      }
+
+      const q = questions[currentQuestion];
+      if (selectedOption === q.answer) {
+        document.getElementById("correctSound").play();
+        feedback.textContent = "✅ ¡Correcto!";
+        feedback.style.color = "green";
+        score++;
+      } else {
+        document.getElementById("wrongSound").play();
+        feedback.textContent = "❌ Incorrecto. Correcta: " + q.answer;
+        feedback.style.color = "red";
+      }
+
+      clearInterval(timer);
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        loadQuestion();
+      } else {
+        endQuiz();
+      }
+    }
+
+    function endQuiz() {
+      document.getElementById("questionText").textContent = "🎉 ¡Cuestionario completado!";
+      document.getElementById("optionsList").innerHTML = "";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("timer").textContent = "";
+      document.getElementById("finalScore").textContent = `🎓 Puntaje final: ${score} de ${questions.length}`;
+      localStorage.setItem("puntajeDerivadas", score);
+
+      if (score === questions.length) {
+        document.getElementById("bienTotal").play();
+      } else {
+        document.getElementById("mejorando").play();
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      timeLeft = 60;
+      document.getElementById("timer").textContent = `Tiempo: ${timeLeft}s`;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = `Tiempo: ${timeLeft}s`;
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          document.getElementById("feedback").textContent = "⏰ Tiempo agotado.";
+          document.getElementById("feedback").style.color = "red";
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
